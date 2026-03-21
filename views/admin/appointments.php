@@ -48,6 +48,24 @@ require_once __DIR__ . '/../../includes/admin/admin_header.php';
            value="<?= htmlspecialchars($_GET['date'] ?? '') ?>"
            onchange="this.form.submit()">
     <button type="submit" class="btn-admin-dark"><i class="fas fa-search me-1"></i> Search</button>
+    <!-- Export Buttons -->
+    <?php
+    $exportParams = http_build_query([
+        'status' => $_GET['status'] ?? 'all',
+        'from'   => $_GET['date']   ?? date('Y-m-01'),
+        'to'     => $_GET['date']   ?? date('Y-m-d'),
+    ]);
+    ?>
+    <div class="ms-auto d-flex gap-2">
+      <a href="/bg-barbershop/api/admin/export_appointments.php?type=print&<?= $exportParams ?>"
+         target="_blank" class="btn-admin-outline" title="Print View">
+        <i class="fas fa-print me-1"></i> Print
+      </a>
+      <a href="/bg-barbershop/api/admin/export_appointments.php?type=csv&<?= $exportParams ?>"
+         class="btn-admin-gold" title="Export to CSV">
+        <i class="fas fa-file-csv me-1"></i> Export CSV
+      </a>
+    </div>
     <a href="appointments.php" class="btn-admin-outline">Reset</a>
   </form>
 </div>

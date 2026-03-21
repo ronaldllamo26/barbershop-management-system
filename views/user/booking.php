@@ -1,5 +1,16 @@
 <?php
+if (session_status() === PHP_SESSION_NONE) session_start();
 if (!defined('BASE_PATH')) define('BASE_PATH', '/bg-barbershop/');
+$isLoggedIn    = !empty($_SESSION['customer_id']);
+$customerName  = $_SESSION['customer_name']  ?? '';
+$customerEmail = $_SESSION['customer_email'] ?? '';
+$customerPhone = ''; // pre-fill if we have it
+if ($isLoggedIn) {
+    require_once __DIR__ . '/../../config/db.php';
+    $cid = intval($_SESSION['customer_id']);
+    $cres = $conn->query("SELECT phone FROM customers WHERE id=$cid LIMIT 1");
+    if ($cres) { $crow = $cres->fetch_assoc(); $customerPhone = $crow['phone'] ?? ''; }
+}
 $pageTitle = 'Book Appointment';
 require_once __DIR__ . '/../../includes/header.php';
 require_once __DIR__ . '/../../includes/navbar.php';
@@ -239,6 +250,57 @@ require_once __DIR__ . '/../../includes/navbar.php';
 
               <div class="booking-summary mb-4" id="bookingSummary"></div>
 
+              <?php if ($isLoggedIn): ?>
+              <!-- LOGGED IN: show pre-filled info -->
+              <div class="logged-in-banner mb-4">
+                <div class="lib-left">
+                  <div class="lib-avatar"><i class="fas fa-user-check"></i></div>
+                  <div>
+                    <strong><?= htmlspecialchars($customerName) ?></strong>
+                    <span><?= htmlspecialchars($customerEmail) ?></span>
+                  </div>
+                </div>
+                <a href="/bg-barbershop/views/user/logout.php" class="lib-logout">
+                  <i class="fas fa-sign-out-alt me-1"></i>Not you?
+                </a>
+              </div>
+              <!-- Hidden fields pre-filled from session -->
+              <input type="hidden" name="first_name" value="<?= htmlspecialchars(explode(' ', $customerName)[0]) ?>">
+              <input type="hidden" name="last_name"  value="<?= htmlspecialchars(implode(' ', array_slice(explode(' ', $customerName), 1))) ?>">
+              <input type="hidden" name="email"      value="<?= htmlspecialchars($customerEmail) ?>">
+              <input type="hidden" name="customer_id" value="<?= intval($_SESSION['customer_id']) ?>">
+              <div class="row g-3">
+                <div class="col-md-6">
+                  <label class="form-label-dark">Phone / Viber *</label>
+                  <input type="tel" name="phone" class="input-dark"
+                         placeholder="+63 9XX XXX XXXX"
+                         value="<?= htmlspecialchars($customerPhone) ?>" required>
+                </div>
+                <div class="col-12">
+                  <label class="form-label-dark">Notes (optional)</label>
+                  <textarea name="notes" class="input-dark" rows="3" placeholder="Any special requests..."></textarea>
+                </div>
+              </div>
+
+              <?php else: ?>
+              <!-- GUEST: login prompt + guest form -->
+              <div class="guest-login-prompt mb-4">
+                <div class="glp-inner">
+                  <div class="glp-left">
+                    <i class="fas fa-user-circle"></i>
+                    <div>
+                      <strong>Already have an account?</strong>
+                      <span>Login to auto-fill your info and track this booking.</span>
+                    </div>
+                  </div>
+                  <a href="/bg-barbershop/views/user/login.php?redirect=<?= urlencode('/bg-barbershop/views/user/booking.php') ?>"
+                     class="btn-black" style="white-space:nowrap;">
+                    <i class="fas fa-sign-in-alt me-1"></i> Login
+                  </a>
+                </div>
+                <div class="glp-divider"><span>or continue as guest</span></div>
+              </div>
+
               <div class="row g-3">
                 <div class="col-md-6">
                   <label class="form-label-dark">First Name *</label>
@@ -261,6 +323,7 @@ require_once __DIR__ . '/../../includes/navbar.php';
                   <textarea name="notes" class="input-dark" rows="3" placeholder="Any special requests..."></textarea>
                 </div>
               </div>
+              <?php endif; ?>
 
               <div class="booking-nav mt-4">
                 <button type="button" class="btn-outline-dark" onclick="prevStep(4)">
@@ -282,8 +345,20 @@ require_once __DIR__ . '/../../includes/navbar.php';
                 Salamat! Your appointment has been received.<br>
                 We'll reach out to confirm your slot shortly.
               </p>
-              <p class="booking-ref mb-5" id="refNumber"></p>
-              <a href="<?= BASE_PATH ?>index.php" class="btn-black">Back to Home</a>
+              <p class="booking-ref mb-4" id="refNumber"></p>
+              <?php if (!$isLoggedIn): ?>
+              <div class="success-register-prompt mb-4">
+                <p>Want to track this booking?</p>
+                <a href="/bg-barbershop/views/user/register.php" class="btn-black me-2">
+                  <i class="fas fa-user-plus me-1"></i> Create Account
+                </a>
+              </div>
+              <?php else: ?>
+              <a href="/bg-barbershop/views/user/my_bookings.php" class="btn-black me-2">
+                <i class="fas fa-list me-1"></i> View My Bookings
+              </a>
+              <?php endif; ?>
+              <a href="/bg-barbershop/index.php" class="btn-outline-dark">Back to Home</a>
             </div>
           </div>
 
@@ -421,12 +496,31 @@ async function loadTimeSlots() {
   wrap.innerHTML = '<p style="color:var(--gray);font-size:.85rem;"><i class="fas fa-spinner fa-spin me-2"></i>Loading slots...</p>';
 
   let bookedSlots = [];
+  let blockedRanges = [];
+  let dayBlocked = false;
+
   if (bk.barberId > 0 && bk.date) {
     try {
       const res = await fetch(`${BASE}api/get_slots.php?barber_id=${bk.barberId}&date=${bk.date}`);
       const data = await res.json();
-      bookedSlots = data.booked || [];
+      bookedSlots    = data.booked         || [];
+      blockedRanges  = data.blocked_ranges || [];
+      dayBlocked     = data.blocked        || false;
     } catch(e) { bookedSlots = []; }
+  }
+
+  wrap.innerHTML = '';
+
+  // Full day blocked
+  if (dayBlocked) {
+    wrap.innerHTML = `<div style="background:#fee2e2;border-left:4px solid #ef4444;color:#b91c1c;padding:14px 16px;font-size:.85rem;">
+      <i class="fas fa-ban me-2"></i><strong>This day is fully blocked.</strong> Please choose another date.
+    </div>`;
+    return;
+  }
+
+  function isInBlockedRange(time) {
+    return blockedRanges.some(r => time >= r.start && time < r.end);
   }
 
   const slots = [];
@@ -435,20 +529,24 @@ async function loadTimeSlots() {
     if (h < 19) slots.push(`${String(h).padStart(2,'0')}:30`);
   }
 
-  wrap.innerHTML = '';
   const container = document.createElement('div');
   container.className = 'time-slots';
 
   slots.forEach(time => {
-    const isBooked = bookedSlots.includes(time);
+    const isBooked  = bookedSlots.includes(time);
+    const isBlocked = isInBlockedRange(time);
     const btn = document.createElement('button');
     btn.type = 'button';
-    btn.className = 'time-slot' + (isBooked ? ' booked' : '');
+    btn.className = 'time-slot' + (isBooked || isBlocked ? ' booked' : '');
     btn.textContent = fmt12(time);
     btn.dataset.value = time;
     if (isBooked) {
       btn.disabled = true;
       btn.title = 'This slot is already booked';
+    } else if (isBlocked) {
+      btn.disabled = true;
+      btn.title = 'This slot is blocked';
+      btn.style.background = '#f1f5f9';
     } else {
       btn.addEventListener('click', () => {
         document.querySelectorAll('.time-slot').forEach(b => b.classList.remove('active'));
@@ -555,6 +653,10 @@ function showAlert(step, msg) {
 // ── Submit ──
 document.getElementById('bookingForm').addEventListener('submit', async function(e) {
   e.preventDefault();
+  const btn = document.getElementById('submitBtn');
+  if (btn.disabled) return; // ← prevent double submit
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Processing...';
   const fd = new FormData(this);
   const payload = {
     ...bk,
@@ -567,10 +669,7 @@ document.getElementById('bookingForm').addEventListener('submit', async function
   if (!payload.first_name || !payload.last_name || !payload.phone) {
     showAlert(4, 'Please fill in all required fields.'); return;
   }
-  const btn = document.getElementById('submitBtn');
-  btn.disabled = true;
-  btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Processing...';
-
+ 
   try {
     const res  = await fetch(`${BASE}api/book_appointment.php`, {
       method: 'POST',

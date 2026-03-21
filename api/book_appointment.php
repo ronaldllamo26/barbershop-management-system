@@ -7,6 +7,9 @@ header('Access-Control-Allow-Headers: Content-Type');
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') { http_response_code(200); exit; }
 if ($_SERVER['REQUEST_METHOD'] !== 'POST')    { echo json_encode(['success'=>false,'message'=>'Invalid method']); exit; }
 
+// Start session to get customer_id if logged in
+if (session_status() === PHP_SESSION_NONE) session_start();
+
 require_once __DIR__ . '/../config/db.php';
 
 $raw  = file_get_contents('php://input');
@@ -21,9 +24,18 @@ foreach (['services','barber','date','time','first_name','last_name','phone'] as
     }
 }
 
-$services = $data['services']; // array of {name, price, duration}
+$services = $data['services'];
 
-// Check barber conflict (skip if No Preference)
+// ── Determine customer_id ──
+// Priority: 1) session (logged in), 2) sent via payload (logged in via PHP form), 3) null (guest)
+$customerId = null;
+if (!empty($_SESSION['customer_id'])) {
+    $customerId = intval($_SESSION['customer_id']);
+} elseif (!empty($data['customer_id'])) {
+    $customerId = intval($data['customer_id']);
+}
+
+// ── Check barber conflict ──
 $barberId = 0;
 if ($data['barber'] !== 'No Preference') {
     $bname   = $conn->real_escape_string($data['barber']);
@@ -31,7 +43,6 @@ if ($data['barber'] !== 'No Preference') {
     if ($bResult && $bResult->num_rows > 0) $barberId = (int)$bResult->fetch_assoc()['id'];
     if (!$barberId) $barberId = 1;
 
-    // Conflict check
     $date_e  = $conn->real_escape_string($data['date']);
     $time_e  = $conn->real_escape_string($data['time']);
     $conflict = $conn->query(
@@ -47,31 +58,41 @@ if ($data['barber'] !== 'No Preference') {
         exit;
     }
 } else {
-    $barberId = 1; // assign default if no preference
+    $barberId = 1;
 }
 
-// Calculate total duration & end time
+// ── Calculate end time ──
 $totalDur = array_sum(array_column($services, 'duration'));
 $startTs  = strtotime($data['date'] . ' ' . $data['time']);
 $end      = date('H:i', $startTs + $totalDur * 60);
 
-// Generate reference no
+// ── Generate reference no ──
 $ref = 'BG-' . date('Ymd') . '-' . strtoupper(substr(uniqid(), -5));
 
 $date_e  = $conn->real_escape_string($data['date']);
 $time_e  = $conn->real_escape_string($data['time']);
 $ref_e   = $conn->real_escape_string($ref);
-$gname   = $conn->real_escape_string(trim($data['first_name'].' '.$data['last_name']));
+$gname   = $conn->real_escape_string(trim($data['first_name'] . ' ' . $data['last_name']));
 $phone   = $conn->real_escape_string($data['phone']);
 $email   = $conn->real_escape_string($data['email'] ?? '');
 $notes   = $conn->real_escape_string($data['notes'] ?? '');
 
-$sql = "INSERT INTO appointments
-        (reference_no,guest_name,guest_phone,guest_email,barber_id,
-         appointment_date,start_time,end_time,status,customer_notes)
-        VALUES
-        ('$ref_e','$gname','$phone','$email',$barberId,
-         '$date_e','$time_e','$end','pending','$notes')";
+// ── Build INSERT — include customer_id if logged in ──
+if ($customerId) {
+    $sql = "INSERT INTO appointments
+            (reference_no, customer_id, guest_name, guest_phone, guest_email,
+             barber_id, appointment_date, start_time, end_time, status, customer_notes)
+            VALUES
+            ('$ref_e', $customerId, '$gname', '$phone', '$email',
+             $barberId, '$date_e', '$time_e', '$end', 'pending', '$notes')";
+} else {
+    $sql = "INSERT INTO appointments
+            (reference_no, guest_name, guest_phone, guest_email,
+             barber_id, appointment_date, start_time, end_time, status, customer_notes)
+            VALUES
+            ('$ref_e', '$gname', '$phone', '$email',
+             $barberId, '$date_e', '$time_e', '$end', 'pending', '$notes')";
+}
 
 if (!$conn->query($sql)) {
     echo json_encode(['success'=>false,'message'=>'DB error: '.$conn->error]); exit;
@@ -79,12 +100,39 @@ if (!$conn->query($sql)) {
 
 $apptId = $conn->insert_id;
 
-// Insert each service
+// ── Insert each service ──
 foreach ($services as $svc) {
     $sname   = $conn->real_escape_string($svc['name']);
-    $sResult = $conn->query("SELECT id,price FROM services WHERE name='$sname' LIMIT 1");
+    $sResult = $conn->query("SELECT id, price FROM services WHERE name='$sname' LIMIT 1");
     $sRow    = $sResult && $sResult->num_rows > 0 ? $sResult->fetch_assoc() : ['id'=>1,'price'=>0];
-    $conn->query("INSERT INTO appointment_services (appointment_id,service_id,price_snapshot) VALUES ($apptId,{$sRow['id']},{$sRow['price']})");
+    $conn->query("INSERT INTO appointment_services (appointment_id, service_id, price_snapshot)
+                  VALUES ($apptId, {$sRow['id']}, {$sRow['price']})");
+}
+
+// ── Also update customer's phone if it was empty ──
+if ($customerId && !empty($data['phone'])) {
+    $ph = $conn->real_escape_string($data['phone']);
+    $conn->query("UPDATE customers SET phone='$ph' WHERE id=$customerId AND (phone='' OR phone IS NULL)");
+}
+
+// ── Send emails ──
+try {
+    require_once __DIR__ . '/../config/mailer.php';
+    $emailBooking = [
+        'reference_no' => $ref,
+        'services'     => $services,
+        'barber'       => $data['barber'],
+        'date'         => $data['date'],
+        'time'         => $data['time'],
+        'guest_name'   => $data['first_name'] . ' ' . $data['last_name'],
+        'phone'        => $data['phone'],
+    ];
+    if (!empty($data['email'])) {
+        sendBookingConfirmation($data['email'], $data['first_name'], $emailBooking);
+    }
+    sendAdminNewBooking($emailBooking);
+} catch (Throwable $e) {
+    error_log('Email error: ' . $e->getMessage());
 }
 
 echo json_encode(['success'=>true,'reference_no'=>$ref]);

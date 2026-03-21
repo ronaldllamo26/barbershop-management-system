@@ -32,6 +32,10 @@
       ['services.php',     'fa-cut',            'Services'],
       ['barbers.php',      'fa-user-tie',       'Barbers'],
       ['gallery.php',      'fa-images',         'Gallery'],
+      ['reports.php',       'fa-chart-bar',      'Reports'],
+      ['blocked_dates.php','fa-ban',             'Block Dates'],
+      ['reviews.php',      'fa-star',            'Reviews'],
+      ['queue.php',        'fa-users',           'Walk-in Queue'],
       ['settings.php',     'fa-cog',            'Settings'],
     ];
     foreach ($navItems as [$file, $icon, $label]):

@@ -9,12 +9,12 @@ $photos = [
     'hero_bg'    => 'https://images.unsplash.com/photo-1503951914875-452162b0f3f1?w=1920&q=80&fit=crop',
     'hero_main'  => 'https://images.unsplash.com/photo-1621605815971-fbc98d665033?w=900&q=85&fit=crop',
     'about_main' => 'https://images.unsplash.com/photo-1585747860715-2ba37e788b70?w=800&q=85&fit=crop',
-    'barber_1' => '/bg-barbershop/assets/images/barbers/barber-1.jpg',
+    'barber_1'   => 'https://images.unsplash.com/photo-1599351431202-1e0f0137899a?w=600&h=700&q=85&fit=crop',
     'barber_2'   => 'https://images.unsplash.com/photo-1622286342621-4bd786c2447c?w=600&h=700&q=85&fit=crop',
-    'barber_3' => '/bg-barbershop/assets/images/barbers/barber-3.jpg',
+    'barber_3'   => 'https://images.unsplash.com/photo-1503443207922-dff7d543fd0e?w=600&h=700&q=85&fit=crop',
     'barber_4'   => 'https://images.unsplash.com/photo-1534297635766-a262cdcb8ee4?w=600&h=700&q=85&fit=crop',
     'g1'         => 'https://images.unsplash.com/photo-1605497788044-5a32c7078486?w=900&q=85&fit=crop',
-    'g2' => 'https://images.unsplash.com/photo-1503951914875-452162b0f3f1?w=600&q=85&fit=crop',
+    'g2'         => 'https://images.unsplash.com/photo-1593702288056-7cc638b5e8a6?w=600&q=85&fit=crop',
     'g3'         => 'https://images.unsplash.com/photo-1560869713-7d0a29430803?w=600&q=85&fit=crop',
     'g4'         => 'https://images.unsplash.com/photo-1519345182560-3f2917c472ef?w=600&q=85&fit=crop',
     'g5'         => 'https://images.unsplash.com/photo-1596728325488-58c87691e9af?w=600&q=85&fit=crop',
@@ -50,11 +50,11 @@ require_once __DIR__ . '/../../includes/navbar.php';
         </div>
         <div class="hero-stats">
           <div>
-            <div class="stat-num" data-target="1" data-suffix="+">0+</div>
+            <div class="stat-num" data-target="5" data-suffix="+">0+</div>
             <div class="stat-label">Years of Service</div>
           </div>
           <div>
-            <div class="stat-num" data-target="6" data-suffix="+">0+</div>
+            <div class="stat-num" data-target="12" data-suffix="+">0+</div>
             <div class="stat-label">Master Barbers</div>
           </div>
           <div>
@@ -75,6 +75,10 @@ require_once __DIR__ . '/../../includes/navbar.php';
       </div>
 
     </div>
+  </div>
+  <div class="hero-scroll">
+    <span class="scroll-text">Scroll</span>
+    <div class="scroll-line"></div>
   </div>
 </section>
 
@@ -102,7 +106,7 @@ require_once __DIR__ . '/../../includes/navbar.php';
       <div class="col-lg-5 fade-up">
         <div class="about-img-outer">
           <div class="about-year-tag">
-            <span class="ay-num">1+</span>
+            <span class="ay-num">5+</span>
             <span class="ay-label">Years</span>
           </div>
           <img src="<?= $photos['about_main'] ?>" alt="BG Barbershop interior" class="about-img-main">
@@ -209,10 +213,10 @@ require_once __DIR__ . '/../../includes/navbar.php';
     <div class="row g-4">
       <?php
       $barbers = [
-        [$photos['barber_1'], 'Lebron James',   'Head Barber'],
-        [$photos['barber_2'], 'Junmar Fajardo',   'Senior Barber'],
-        [$photos['barber_3'], 'Xi Jinping', 'Fade Specialist'],
-        [$photos['barber_4'], 'Adolf Hitler',   'Color &amp; Style Expert'],
+        [$photos['barber_1'], 'Marco Reyes',   'Head Barber'],
+        [$photos['barber_2'], 'Jake Santos',   'Senior Barber'],
+        [$photos['barber_3'], 'Carlo Mendoza', 'Fade Specialist'],
+        [$photos['barber_4'], 'Luis Garcia',   'Color &amp; Style Expert'],
       ];
       foreach ($barbers as $i => [$photo, $name, $role]): ?>
       <div class="col-md-6 col-lg-3 fade-up d<?= $i+1 ?>">
@@ -272,22 +276,30 @@ require_once __DIR__ . '/../../includes/navbar.php';
     </div>
     <div class="row g-4">
       <?php
-      $reviews = [
-        ['Jerico P.', 'Regular Client · Cubao',   5, 'Best barbershop in QC, walang tanong. Marco knows exactly what I want without me even explaining. Consistent — talo pa yung mga kilala.'],
-        ['Aldrin M.', 'Regular Client · QC',      5, 'Dali mag-book, malinis yung lugar, at yung barbers professional talaga. Worth it ang presyo — babalik ka talaga.'],
-        ['Renzo D.',  'New Client · Diliman',     5, 'First time ko dito, sinabihan ako ng friend ko. Hindi ako disappointed. Yung hot towel shave experience, ibang klase talaga.'],
-      ];
-      foreach ($reviews as $i => [$name, $meta, $stars, $text]): ?>
-      <div class="col-md-6 col-lg-4 fade-up d<?= $i+1 ?>">
+      if (!isset($conn)) require_once __DIR__ . '/../../config/db.php';
+      $reviewsRes = $conn->query("SELECT * FROM testimonials WHERE is_active=1 AND is_featured=1 ORDER BY created_at DESC LIMIT 3");
+      $reviewCount = 0;
+      if ($reviewsRes && $reviewsRes->num_rows > 0):
+        while ($rev = $reviewsRes->fetch_assoc()):
+          $reviewCount++;
+      ?>
+      <div class="col-md-6 col-lg-4 fade-up d<?= $reviewCount ?>">
         <div class="testi-card">
           <span class="testi-quote">"</span>
-          <div class="testi-stars"><?= str_repeat('<i class="fas fa-star"></i>', $stars) ?></div>
-          <p class="testi-text">"<?= $text ?>"</p>
-          <div class="testi-name"><?= $name ?></div>
-          <div class="testi-meta"><?= $meta ?></div>
+          <div class="testi-stars">
+            <?= str_repeat('<i class="fas fa-star"></i>', $rev['rating']) ?>
+          </div>
+          <p class="testi-text">"<?= htmlspecialchars($rev['review_text']) ?>"</p>
+          <div class="testi-name"><?= htmlspecialchars($rev['customer_name']) ?></div>
+          <div class="testi-meta"><?= htmlspecialchars($rev['location'] ?: 'BG Customer') ?></div>
         </div>
       </div>
-      <?php endforeach; ?>
+      <?php endwhile;
+      else: ?>
+      <div class="col-12 text-center" style="color:var(--gray-l);padding:40px 0;">
+        <p>No reviews yet. Be the first to share your experience!</p>
+      </div>
+      <?php endif; ?>
     </div>
   </div>
 </section>
@@ -334,7 +346,7 @@ require_once __DIR__ . '/../../includes/navbar.php';
       <div class="col-lg-4 fade-up d1">
         <?php
         $contacts = [
-          ['fa-map-marker-alt', 'Address',         '69 Tawi-Tawi, Brgy. Balingasa,<br>Quezon City, Metro Manila'],
+          ['fa-map-marker-alt', 'Address',         '123 Sample Street, Brgy. [Barangay],<br>Quezon City, Metro Manila'],
           ['fa-phone-alt',      'Phone / Viber',   '+63 912 345 6789<br>+63 900 123 4567'],
           ['fa-clock',          'Operating Hours', 'Mon – Fri &nbsp; 9:00 AM – 8:00 PM<br>Sat – Sun &nbsp; 9:00 AM – 7:00 PM'],
           ['fab fa-facebook-f', 'Social Media',    '@BGBiglangGwapoBarbershop'],

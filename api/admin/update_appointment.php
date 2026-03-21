@@ -29,6 +29,29 @@ if (empty($sets)) { echo json_encode(['success'=>false,'message'=>'Nothing to up
 
 $sql = "UPDATE appointments SET " . implode(',', $sets) . " WHERE id=$id";
 if ($conn->query($sql)) {
+    // ── Send cancellation email if status changed to cancelled ──
+    if (isset($data['status']) && $data['status'] === 'cancelled') {
+        try {
+            // Get appointment details
+            $appt = $conn->query(
+                "SELECT a.*, CONCAT(b.first_name,' ',b.last_name) AS barber_name
+                 FROM appointments a
+                 LEFT JOIN barbers b ON b.id = a.barber_id
+                 WHERE a.id = $id LIMIT 1"
+            )->fetch_assoc();
+
+            if ($appt && !empty($appt['guest_email'])) {
+                require_once __DIR__ . '/../../config/mailer.php';
+                sendCancellationNotice(
+                    $appt['guest_email'],
+                    $appt['guest_name'],
+                    $appt
+                );
+            }
+        } catch (Throwable $e) {
+            error_log('Cancellation email error: ' . $e->getMessage());
+        }
+    }
     echo json_encode(['success'=>true]);
 } else {
     echo json_encode(['success'=>false,'message'=>$conn->error]);
