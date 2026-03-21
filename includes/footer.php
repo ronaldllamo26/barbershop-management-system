@@ -47,7 +47,7 @@
       <div class="col-lg-3">
         <p class="footer-heading">Visit Us</p>
         <ul class="footer-list footer-info">
-          <li><i class="fas fa-map-marker-alt"></i> 123 Sample Street,<br>Quezon City, Metro Manila</li>
+          <li><i class="fas fa-map-marker-alt"></i> 69 Balingasa,<br>Quezon City, Metro Manila</li>
           <li><i class="fas fa-phone-alt"></i> +63 912 345 6789</li>
           <li><i class="fas fa-envelope"></i> hello@bgbarbershop.com</li>
           <li><i class="fas fa-clock"></i> Mon–Fri: 9AM – 8PM<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Sat–Sun: 9AM – 7PM</li>

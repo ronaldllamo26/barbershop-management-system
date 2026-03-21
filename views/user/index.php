@@ -76,10 +76,6 @@ require_once __DIR__ . '/../../includes/navbar.php';
 
     </div>
   </div>
-  <div class="hero-scroll">
-    <span class="scroll-text">Scroll</span>
-    <div class="scroll-line"></div>
-  </div>
 </section>
 
 
