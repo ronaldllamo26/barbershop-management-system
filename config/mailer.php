@@ -182,3 +182,37 @@ function sendCancellationNotice($toEmail, $toName, $booking) {
     $html = emailTemplate('Appointment Cancelled', $body);
     return sendMail($toEmail, $toName, 'BG Barbershop — Appointment Cancelled (#' . $booking['reference_no'] . ')', $html);
 }
+
+// ── 4. Booking Reminder (1 day before) ──
+
+function sendBookingReminder($toEmail, $toName, $booking) {
+    if (!$toEmail) return false;
+
+    $date    = date('l, F j, Y', strtotime($booking['appointment_date']));
+    $time    = date('h:i A', strtotime($booking['start_time']));
+    $barber  = $booking['barber_name'] ?? 'Your barber';
+    $services = $booking['services'] ?? 'Your service';
+    $ref     = $booking['reference_no'];
+
+    $body = '
+    <p class="text">Hi <strong>' . htmlspecialchars($toName) . '</strong>,<br>
+    This is a friendly reminder that you have an appointment <strong>tomorrow</strong> at BG Biglang Gwapo Barbershop! 💈</p>
+
+    <div class="ref-box">Ref: ' . htmlspecialchars($ref) . '</div>
+
+    <div class="detail-box">
+      <div class="detail-row"><span>Service(s)</span><strong>' . htmlspecialchars($services) . '</strong></div>
+      <div class="detail-row"><span>Barber</span><strong>' . htmlspecialchars($barber) . '</strong></div>
+      <div class="detail-row"><span>Date</span><strong>' . $date . '</strong></div>
+      <div class="detail-row"><span>Time</span><strong>' . $time . '</strong></div>
+    </div>
+
+    <p class="text">
+      📍 Please arrive <strong>5 minutes early</strong>.<br>
+      Need to cancel? Please let us know at least 2 hours before your appointment.<br>
+      📞 <strong>+63 912 345 6789</strong>
+    </p>';
+
+    $html = emailTemplate('Appointment Reminder — Tomorrow! 💈', $body);
+    return sendMail($toEmail, $toName, 'BG Barbershop — Reminder: Appointment Tomorrow (#' . $ref . ')', $html);
+}

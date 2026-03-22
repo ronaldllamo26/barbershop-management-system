@@ -1,5 +1,6 @@
 <?php
 if (!defined('BASE_PATH')) define('BASE_PATH', '/bg-barbershop/');
+require_once __DIR__ . '/../../config/db.php';
 $pageTitle = 'About Us';
 require_once __DIR__ . '/../../includes/header.php';
 require_once __DIR__ . '/../../includes/navbar.php';
@@ -133,30 +134,41 @@ require_once __DIR__ . '/../../includes/navbar.php';
     </div>
     <div class="row g-4">
       <?php
-      $team = [
-        ['https://images.unsplash.com/photo-1599351431202-1e0f0137899a?w=600&h=700&q=85&fit=crop', 'Marco Reyes',   'Head Barber',         'Specializes in fades and textured styles. 8 years of experience.'],
-        ['https://images.unsplash.com/photo-1622286342621-4bd786c2447c?w=600&h=700&q=85&fit=crop', 'Jake Santos',   'Senior Barber',        'Master of classic cuts and hot towel shaves. 6 years in the craft.'],
-        ['https://images.unsplash.com/photo-1503443207922-dff7d543fd0e?w=600&h=700&q=85&fit=crop', 'Carlo Mendoza', 'Fade Specialist',      'If you want the cleanest fade in QC — Carlo is your guy.'],
-        ['https://images.unsplash.com/photo-1534297635766-a262cdcb8ee4?w=600&h=700&q=85&fit=crop', 'Luis Garcia',   'Color & Style Expert', 'Brings modern color techniques and creative styling to every client.'],
-      ];
-      foreach ($team as $i => [$photo, $name, $role, $bio]): ?>
+      $teamRes = $conn->query("SELECT * FROM barbers WHERE is_active=1 ORDER BY sort_order, id");
+      $i = 0;
+      while ($b = $teamRes->fetch_assoc()):
+        $bname  = htmlspecialchars($b['first_name'] . ' ' . $b['last_name']);
+        $brole  = htmlspecialchars($b['role_title']);
+        $bbio   = htmlspecialchars($b['bio'] ?? '');
+        $bphoto = htmlspecialchars($b['photo'] ?? '');
+        $bInsta = htmlspecialchars($b['instagram'] ?? '#');
+        $bFace  = htmlspecialchars($b['facebook']  ?? '#');
+      ?>
       <div class="col-md-6 col-lg-3 fade-up d<?= ($i%4)+1 ?>">
         <div class="team-card">
           <div class="team-img-wrap">
-            <img src="<?= $photo ?>" alt="<?= $name ?>">
+            <?php if ($bphoto): ?>
+            <img src="<?= $bphoto ?>" alt="<?= $bname ?>">
+            <?php else: ?>
+            <div style="width:100%;height:100%;background:var(--dark-2);display:flex;align-items:center;justify-content:center;">
+              <i class="fas fa-user-tie" style="font-size:4rem;color:var(--gold);"></i>
+            </div>
+            <?php endif; ?>
           </div>
           <div class="team-info">
-            <h4><?= $name ?></h4>
-            <span class="team-role"><?= $role ?></span>
-            <p class="team-bio"><?= $bio ?></p>
+            <h4><?= $bname ?></h4>
+            <span class="team-role"><?= $brole ?></span>
+            <?php if ($bbio): ?>
+            <p class="team-bio"><?= $bbio ?></p>
+            <?php endif; ?>
             <div class="team-socials">
-              <a href="#"><i class="fab fa-instagram"></i></a>
-              <a href="#"><i class="fab fa-facebook-f"></i></a>
+              <a href="<?= $bInsta ?>" <?= $bInsta !== '#' ? 'target="_blank"' : '' ?>><i class="fab fa-instagram"></i></a>
+              <a href="<?= $bFace ?>"  <?= $bFace  !== '#' ? 'target="_blank"' : '' ?>><i class="fab fa-facebook-f"></i></a>
             </div>
           </div>
         </div>
       </div>
-      <?php endforeach; ?>
+      <?php $i++; endwhile; ?>
     </div>
   </div>
 </section>

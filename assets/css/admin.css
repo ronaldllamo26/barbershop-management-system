@@ -569,3 +569,56 @@ textarea.admin-input { resize: vertical; }
 .qc-meta span { font-size: .72rem; color: var(--gray-d); }
 
 .qc-actions { display: flex; gap: 6px; flex-shrink: 0; }
+
+/* Hide browser default password reveal button */
+input[type="password"]::-ms-reveal,
+input[type="password"]::-ms-clear,
+input[type="password"]::-webkit-credentials-auto-fill-button,
+input[type="password"]::-webkit-textfield-decoration-container {
+  display: none !important;
+}
+
+/* ── Mobile Responsive Admin ───────────── */
+@media (max-width: 991px) {
+  /* Sidebar */
+  .admin-sidebar {
+    transform: translateX(calc(-1 * var(--sidebar-w)));
+  }
+  .admin-sidebar.open {
+    transform: translateX(0);
+    box-shadow: 4px 0 24px rgba(0,0,0,.3);
+  }
+  .admin-main { margin-left: 0; }
+  .admin-topbar { left: 0 !important; width: 100% !important; }
+
+  /* Overlay when sidebar is open */
+  .sidebar-overlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,.5);
+    z-index: 999;
+  }
+  .sidebar-overlay.active { display: block; }
+
+  /* Tables — horizontal scroll */
+  .admin-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .admin-table { min-width: 700px; }
+
+  /* Filter bar */
+  .admin-filter-bar { flex-direction: column; align-items: stretch; }
+  .admin-search { width: 100%; }
+  .ms-auto { margin-left: 0 !important; }
+
+  /* Stat cards */
+  .stat-card { padding: 16px; }
+  .stat-num  { font-size: 1.6rem; }
+
+  /* Admin content padding */
+  .admin-content { padding: 80px 12px 24px; }
+}
+
+@media (max-width: 576px) {
+  .admin-section-header { flex-direction: column; align-items: flex-start; }
+  .report-filter-bar { flex-direction: column; }
+  .admin-barber-card .abc-img-wrap { height: 180px; }
+}

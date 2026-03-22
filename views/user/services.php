@@ -1,10 +1,31 @@
 <?php
-if (!defined('BASE_PATH')) {
-    define('BASE_PATH', '/bg-barbershop/');
-}
+if (!defined('BASE_PATH')) define('BASE_PATH', '/bg-barbershop/');
 $pageTitle = 'Services';
+require_once __DIR__ . '/../../config/db.php';
 require_once __DIR__ . '/../../includes/header.php';
 require_once __DIR__ . '/../../includes/navbar.php';
+
+// Load categories with their services from DB
+$catIcons = [
+    'Haircut & Style'      => 'fa-cut',
+    'Shave'                => 'fa-fire',
+    'Beard'                => 'fa-user-tie',
+    'Treatment'            => 'fa-spa',
+    'Kids'                 => 'fa-child',
+    'Packages'             => 'fa-star',
+];
+
+$catsRes = $conn->query(
+    "SELECT sc.*, GROUP_CONCAT(
+        s.id,'||',s.name,'||',COALESCE(s.description,''),'||',s.price,'||',s.duration_mins
+        ORDER BY s.sort_order, s.id
+        SEPARATOR ';;'
+     ) AS services_data
+     FROM service_categories sc
+     LEFT JOIN services s ON s.category_id = sc.id AND s.is_active = 1
+     GROUP BY sc.id
+     ORDER BY sc.sort_order"
+);
 ?>
 
 <!-- PAGE HERO -->
@@ -27,67 +48,12 @@ require_once __DIR__ . '/../../includes/navbar.php';
   <div class="container">
 
     <?php
-    $categories = [
-      [
-        'icon'  => 'fa-cut',
-        'name'  => 'Haircut & Style',
-        'desc'  => 'From classic cuts to modern fades — our barbers deliver precision every time.',
-        'items' => [
-          ['Regular Haircut',    'Classic cut with your choice of style.',              '₱350', '30 mins'],
-          ['Skin Fade',          'High, mid, or low fade — clean and precise.',         '₱400', '35 mins'],
-          ['Textured Crop',      'Modern crop with textured top.',                      '₱400', '35 mins'],
-          ['Haircut + Blowdry',  'Full cut and professional blowdry finish.',           '₱500', '45 mins'],
-        ],
-      ],
-      [
-        'icon'  => 'fa-fire',
-        'name'  => 'Shave',
-        'desc'  => 'The classic barbershop shave experience — relaxing, precise, premium.',
-        'items' => [
-          ['Hot Towel Shave', 'Full straight-razor shave with hot towel treatment.',  '₱450', '30 mins'],
-          ['Clean Shave',     'Quick clean shave with premium shaving cream.',        '₱250', '20 mins'],
-        ],
-      ],
-      [
-        'icon'  => 'fa-user-tie',
-        'name'  => 'Beard',
-        'desc'  => 'Shape, sculpt, and define your beard to perfection.',
-        'items' => [
-          ['Beard Trim & Shape',   'Clean up and sculpt to your desired style.',      '₱250', '20 mins'],
-          ['Beard Trim + Line Up', 'Full beard service with detailed line-up.',       '₱350', '30 mins'],
-        ],
-      ],
-      [
-        'icon'  => 'fa-spa',
-        'name'  => 'Hair & Scalp Treatment',
-        'desc'  => 'Restore and nourish your hair with our premium treatment services.',
-        'items' => [
-          ['Hot Oil Treatment',       'Deep conditioning with premium hair oil.',          '₱350', '30 mins'],
-          ['Scalp Massage',           'Relaxing scalp massage to relieve stress.',         '₱300', '20 mins'],
-          ['Anti-Dandruff Treatment', 'Medicated scalp treatment.',                        '₱400', '30 mins'],
-          ['Hair Color (Basic)',      'Single-process color application.',                 '₱800', '60 mins'],
-        ],
-      ],
-      [
-        'icon'  => 'fa-child',
-        'name'  => 'Kids',
-        'desc'  => 'Fun and gentle haircuts for the little ones.',
-        'items' => [
-          ['Kids Haircut (12 & below)', 'Fun, gentle haircut for kids 12 and below.', '₱250', '25 mins'],
-        ],
-      ],
-      [
-        'icon'  => 'fa-star',
-        'name'  => 'BG Packages',
-        'desc'  => 'The best value combos — everything your glow-up needs in one booking.',
-        'items' => [
-          ['BG Classic Package',  'Haircut + Hot Towel Shave.',                                    '₱750',  '55 mins'],
-          ['BG Premium Package',  'Haircut + Hot Towel Shave + Beard Trim + Scalp Massage.',       '₱999',  '90 mins'],
-          ['BG Glow-Up Package',  'Haircut + Hair Treatment + Blowdry.',                           '₱900',  '75 mins'],
-        ],
-      ],
-    ];
-    foreach ($categories as $ci => $cat): ?>
+    $ci = 0;
+    while ($cat = $catsRes->fetch_assoc()):
+      if (empty($cat['services_data'])) { continue; }
+      $icon     = $catIcons[$cat['name']] ?? 'fa-scissors';
+      $services = explode(';;', $cat['services_data']);
+    ?>
 
     <div class="svc-category fade-up <?= $ci % 2 !== 0 ? 'svc-cat-alt' : '' ?>">
       <div class="row align-items-start g-4">
@@ -95,9 +61,9 @@ require_once __DIR__ . '/../../includes/navbar.php';
         <!-- Category header -->
         <div class="col-lg-3">
           <div class="svc-cat-header">
-            <div class="svc-cat-icon"><i class="fas <?= $cat['icon'] ?>"></i></div>
-            <h3 class="svc-cat-name"><?= $cat['name'] ?></h3>
-            <p class="svc-cat-desc"><?= $cat['desc'] ?></p>
+            <div class="svc-cat-icon"><i class="fas <?= $icon ?>"></i></div>
+            <h3 class="svc-cat-name"><?= htmlspecialchars($cat['name']) ?></h3>
+            <p class="svc-cat-desc"><?= htmlspecialchars($cat['description'] ?? '') ?></p>
             <a href="<?= BASE_PATH ?>views/user/booking.php" class="btn-gold mt-3">
               <i class="fas fa-calendar-check"></i> Book Now
             </a>
@@ -107,15 +73,23 @@ require_once __DIR__ . '/../../includes/navbar.php';
         <!-- Service items -->
         <div class="col-lg-9">
           <div class="svc-items">
-            <?php foreach ($cat['items'] as $item): ?>
+            <?php foreach ($services as $svcRaw):
+              $parts = explode('||', $svcRaw);
+              if (count($parts) < 5) continue;
+              [,$svcName, $svcDesc, $svcPrice, $svcDur] = $parts;
+            ?>
             <div class="svc-item">
               <div class="svc-item-left">
-                <h5 class="svc-item-name"><?= $item[0] ?></h5>
-                <p class="svc-item-desc"><?= $item[1] ?></p>
+                <h5 class="svc-item-name"><?= htmlspecialchars($svcName) ?></h5>
+                <?php if ($svcDesc): ?>
+                <p class="svc-item-desc"><?= htmlspecialchars($svcDesc) ?></p>
+                <?php endif; ?>
               </div>
               <div class="svc-item-right">
-                <span class="svc-item-price"><?= $item[2] ?></span>
-                <span class="svc-item-duration"><i class="far fa-clock"></i> <?= $item[3] ?></span>
+                <span class="svc-item-price">₱<?= number_format($svcPrice) ?></span>
+                <span class="svc-item-duration">
+                  <i class="far fa-clock"></i> <?= $svcDur ?> mins
+                </span>
               </div>
             </div>
             <?php endforeach; ?>
@@ -125,7 +99,7 @@ require_once __DIR__ . '/../../includes/navbar.php';
       </div>
     </div>
 
-    <?php endforeach; ?>
+    <?php $ci++; endwhile; ?>
 
   </div>
 </section>

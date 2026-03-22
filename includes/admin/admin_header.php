@@ -36,6 +36,7 @@
       ['blocked_dates.php','fa-ban',             'Block Dates'],
       ['reviews.php',      'fa-star',            'Reviews'],
       ['queue.php',        'fa-users',           'Walk-in Queue'],
+      ['customers.php',    'fa-id-card',         'Customers'],
       ['settings.php',     'fa-cog',            'Settings'],
     ];
     foreach ($navItems as [$file, $icon, $label]):

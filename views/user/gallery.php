@@ -1,23 +1,16 @@
 <?php
 if (!defined('BASE_PATH')) define('BASE_PATH', '/bg-barbershop/');
 $pageTitle = 'Gallery';
+require_once __DIR__ . '/../../config/db.php';
 require_once __DIR__ . '/../../includes/header.php';
 require_once __DIR__ . '/../../includes/navbar.php';
 
-$photos = [
-  ['https://images.unsplash.com/photo-1605497788044-5a32c7078486?w=900&q=85&fit=crop', 'haircut',    'Skin Fade'],
-  ['https://images.unsplash.com/photo-1503951914875-452162b0f3f1?w=900&q=85&fit=crop', 'haircut',    'Classic Cut'],
-  ['https://images.unsplash.com/photo-1621605815971-fbc98d665033?w=900&q=85&fit=crop', 'haircut',    'Modern Style'],
-  ['https://images.unsplash.com/photo-1599351431202-1e0f0137899a?w=900&q=85&fit=crop', 'team',       'Head Barber'],
-  ['https://images.unsplash.com/photo-1622286342621-4bd786c2447c?w=900&q=85&fit=crop', 'team',       'Senior Barber'],
-  ['https://images.unsplash.com/photo-1560869713-7d0a29430803?w=900&q=85&fit=crop', 'shave',      'Hot Towel Shave'],
-  ['https://images.unsplash.com/photo-1519345182560-3f2917c472ef?w=900&q=85&fit=crop', 'beard',      'Beard Sculpt'],
-  ['https://images.unsplash.com/photo-1503443207922-dff7d543fd0e?w=900&q=85&fit=crop', 'team',       'Fade Specialist'],
-  ['https://images.unsplash.com/photo-1585747860715-2ba37e788b70?w=900&q=85&fit=crop', 'shop',       'BG Interior'],
-  ['https://images.unsplash.com/photo-1534297635766-a262cdcb8ee4?w=900&q=85&fit=crop', 'haircut',    'Textured Crop'],
-  ['https://images.unsplash.com/photo-1596728325488-58c87691e9af?w=900&q=85&fit=crop', 'beard',      'Beard Trim'],
-  ['https://images.unsplash.com/photo-1473679408190-0693dd26c96f?w=900&q=85&fit=crop', 'shop',       'Shop Vibes'],
-];
+// Load from DB
+$photosRes = $conn->query("SELECT * FROM gallery WHERE is_active=1 ORDER BY uploaded_at DESC");
+$photos = [];
+while ($row = $photosRes->fetch_assoc()) {
+    $photos[] = [$row['image_path'], $row['category'], $row['title'] ?: 'BG Barbershop'];
+}
 ?>
 
 <!-- PAGE HERO -->

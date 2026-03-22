@@ -44,9 +44,10 @@ require_once __DIR__ . '/../../includes/admin/admin_header.php';
       <option value="<?= $val ?>" <?= ($statusFilter===$val)?'selected':'' ?>><?= $lbl ?></option>
       <?php endforeach; ?>
     </select>
-    <input type="date" name="date" class="admin-filter-select"
+    <input type="text" name="date" id="datePicker" class="admin-filter-select"
+           placeholder="Pick a date..."
            value="<?= htmlspecialchars($_GET['date'] ?? '') ?>"
-           onchange="this.form.submit()">
+           style="cursor:pointer;min-width:140px;" readonly>
     <button type="submit" class="btn-admin-dark"><i class="fas fa-search me-1"></i> Search</button>
     <!-- Export Buttons -->
     <?php
@@ -201,6 +202,22 @@ function openModal(id)  { document.getElementById(id).classList.add('active'); }
 function closeModal(id) { document.getElementById(id).classList.remove('active'); }
 document.querySelectorAll('.admin-modal-backdrop').forEach(m => {
   m.addEventListener('click', e => { if (e.target === m) m.classList.remove('active'); });
+});
+</script>
+
+<!-- Flatpickr Date Picker -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script>
+flatpickr("#datePicker", {
+  dateFormat: "Y-m-d",
+  allowInput: false,
+  disableMobile: true,
+  defaultDate: "<?= htmlspecialchars($_GET['date'] ?? '') ?>",
+  onChange: function(selectedDates, dateStr) {
+    document.getElementById('datePicker').value = dateStr;
+    document.getElementById('datePicker').closest('form').submit();
+  }
 });
 </script>
 

@@ -232,7 +232,7 @@ CREATE TABLE IF NOT EXISTS settings (
 INSERT INTO settings (setting_key, setting_val, label) VALUES
 ('shop_name',          'BG Biglang Gwapo Barbershop', 'Shop Name'),
 ('shop_tagline',       'Look Sharp. Feel Unstoppable.','Tagline'),
-('shop_address',       '123 Sample Street, Quezon City, Metro Manila', 'Address'),
+('shop_address',       '213 Temple Street, Quezon City, Metro Manila', 'Address'),
 ('shop_phone',         '+63 912 345 6789',             'Phone'),
 ('shop_email',         'hello@bgbarbershop.com',       'Email'),
 ('shop_hours_weekday', '9:00 AM – 8:00 PM',            'Weekday Hours'),

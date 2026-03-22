@@ -11,8 +11,9 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=Raleway:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="<?= BASE_PATH ?>assets/css/style.css">
+  <link rel="stylesheet" href="<?= BASE_PATH ?>assets/css/pages.css">
   <link rel="icon" href="<?= BASE_PATH ?>assets/images/logo/favicon.ico">
-  <link rel="stylesheet" href="/bg-barbershop/assets/css/pages.css">
+  <script src="https://www.google.com/recaptcha/api.js?render=6Lef9plsAAAADlpJ9LESMH2t4rZE_qiuDK6P9lT"></script>
 </head>
 <body>
 <div id="page-loader">

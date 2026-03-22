@@ -1,0 +1,64 @@
+=== BG Barbershop Reminder Cron ===
+Date: 2026-03-22 02:05:58
+Sending reminders for: 2026-03-23
+Found: 0 appointment(s)
+
+
+Done! Sent: 0 | Failed: 0
+========================================
+
+=== BG Barbershop Reminder Cron ===
+Date: 2026-03-22 02:07:56
+Sending reminders for: 2026-03-23
+Found: 0 appointment(s)
+
+
+Done! Sent: 0 | Failed: 0
+========================================
+
+=== BG Barbershop Reminder Cron ===
+Date: 2026-03-22 02:08:00
+Sending reminders for: 2026-03-23
+Found: 0 appointment(s)
+
+
+Done! Sent: 0 | Failed: 0
+========================================
+
+=== BG Barbershop Reminder Cron ===
+Date: 2026-03-22 02:09:45
+Sending reminders for: 2026-03-23
+Found: 0 appointment(s)
+
+
+Done! Sent: 0 | Failed: 0
+========================================
+
+=== BG Barbershop Reminder Cron ===
+Date: 2026-03-22 02:12:34
+Sending reminders for: 2026-03-23
+Found: 0 appointment(s)
+
+
+Done! Sent: 0 | Failed: 0
+========================================
+
+=== BG Barbershop Reminder Cron ===
+Date: 2026-03-22 02:13:40
+Sending reminders for: 2026-03-23
+Found: 0 appointment(s)
+
+
+Done! Sent: 0 | Failed: 0
+========================================
+
+=== BG Barbershop Reminder Cron ===
+Date: 2026-03-22 02:15:28
+Sending reminders for: 2026-03-23
+Found: 1 appointment(s)
+
+✓ Sent to: Kyrie Irving (llamoronald1@gmail.com)
+
+Done! Sent: 1 | Failed: 0
+========================================
+

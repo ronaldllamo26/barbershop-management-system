@@ -12,6 +12,7 @@ if ($isLoggedIn) {
     if ($cres) { $crow = $cres->fetch_assoc(); $customerPhone = $crow['phone'] ?? ''; }
 }
 $pageTitle = 'Book Appointment';
+require_once __DIR__ . '/../../config/security.php';
 require_once __DIR__ . '/../../includes/header.php';
 require_once __DIR__ . '/../../includes/navbar.php';
 ?>
@@ -166,25 +167,32 @@ require_once __DIR__ . '/../../includes/navbar.php';
 
               <div class="row g-3" id="barberGrid">
                 <?php
-                $barbers = [
-                  [1, 'Marco Reyes',   'Head Barber',         'https://images.unsplash.com/photo-1599351431202-1e0f0137899a?w=300&h=300&q=80&fit=crop&crop=face'],
-                  [2, 'Jake Santos',   'Senior Barber',        'https://images.unsplash.com/photo-1622286342621-4bd786c2447c?w=300&h=300&q=80&fit=crop&crop=face'],
-                  [3, 'Carlo Mendoza', 'Fade Specialist',      'https://images.unsplash.com/photo-1503443207922-dff7d543fd0e?w=300&h=300&q=80&fit=crop&crop=face'],
-                  [4, 'Luis Garcia',   'Color & Style Expert', 'https://images.unsplash.com/photo-1534297635766-a262cdcb8ee4?w=300&h=300&q=80&fit=crop&crop=face'],
-                ];
-                foreach ($barbers as [$bid, $bname, $brole, $bphoto]): ?>
+                if (!isset($conn)) require_once __DIR__ . '/../../config/db.php';
+                $barbersRes = $conn->query("SELECT * FROM barbers WHERE is_active=1 ORDER BY sort_order, id");
+                while ($b = $barbersRes->fetch_assoc()):
+                  $bid    = $b['id'];
+                  $bname  = htmlspecialchars($b['first_name'] . ' ' . $b['last_name']);
+                  $brole  = htmlspecialchars($b['role_title']);
+                  $bphoto = htmlspecialchars($b['photo'] ?? '');
+                ?>
                 <div class="col-6 col-md-3">
                   <label class="barber-pick-card" data-barber-id="<?= $bid ?>">
                     <input type="radio" name="barber" value="<?= $bname ?>" data-id="<?= $bid ?>">
                     <div class="barber-pick-inner">
+                      <?php if ($bphoto): ?>
                       <img src="<?= $bphoto ?>" alt="<?= $bname ?>">
+                      <?php else: ?>
+                      <div style="width:90px;height:90px;border-radius:50%;background:var(--light-2);margin:0 auto 14px;display:flex;align-items:center;justify-content:center;color:var(--gray);font-size:2rem;">
+                        <i class="fas fa-user-tie"></i>
+                      </div>
+                      <?php endif; ?>
                       <h5><?= $bname ?></h5>
                       <span><?= $brole ?></span>
                       <div class="barber-availability" id="avail-<?= $bid ?>"></div>
                     </div>
                   </label>
                 </div>
-                <?php endforeach; ?>
+                <?php endwhile; ?>
                 <div class="col-6 col-md-3">
                   <label class="barber-pick-card">
                     <input type="radio" name="barber" value="No Preference" data-id="0" checked>
@@ -653,23 +661,30 @@ function showAlert(step, msg) {
 // ── Submit ──
 document.getElementById('bookingForm').addEventListener('submit', async function(e) {
   e.preventDefault();
-  const btn = document.getElementById('submitBtn');
-  if (btn.disabled) return; // ← prevent double submit
-  btn.disabled = true;
-  btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Processing...';
   const fd = new FormData(this);
+  // Get reCAPTCHA token
+  let recaptchaToken = '';
+  try {
+    await new Promise(resolve => grecaptcha.ready(resolve));
+    recaptchaToken = await grecaptcha.execute('6Lef9plsAAAADlpJ9LESMH2t4rZE_qiuDK6P9lT', {action: 'booking'});
+  } catch(e) { recaptchaToken = ''; }
+
   const payload = {
     ...bk,
-    first_name: fd.get('first_name'),
-    last_name:  fd.get('last_name'),
-    phone:      fd.get('phone'),
-    email:      fd.get('email') || '',
-    notes:      fd.get('notes') || '',
+    first_name:      fd.get('first_name'),
+    last_name:       fd.get('last_name'),
+    phone:           fd.get('phone'),
+    email:           fd.get('email') || '',
+    notes:           fd.get('notes') || '',
+    recaptcha_token: recaptchaToken,
   };
   if (!payload.first_name || !payload.last_name || !payload.phone) {
     showAlert(4, 'Please fill in all required fields.'); return;
   }
- 
+  const btn = document.getElementById('submitBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Processing...';
+
   try {
     const res  = await fetch(`${BASE}api/book_appointment.php`, {
       method: 'POST',
@@ -679,10 +694,8 @@ document.getElementById('bookingForm').addEventListener('submit', async function
     if (!res.ok) throw new Error('HTTP ' + res.status);
     const data = await res.json();
     if (data.success) {
-      document.getElementById('refNumber').textContent = 'Reference No: ' + data.reference_no;
-      document.getElementById(`step-${currentStep}`).classList.add('d-none');
-      document.getElementById('step-success').classList.remove('d-none');
-      document.querySelectorAll('.bstep').forEach(el => el.classList.add('done'));
+      // Redirect to confirmation page
+      window.location.href = '/bg-barbershop/views/user/booking_confirmation.php?ref=' + data.reference_no;
     } else {
       showAlert(4, data.message || 'Something went wrong. Please try again.');
       btn.disabled = false;

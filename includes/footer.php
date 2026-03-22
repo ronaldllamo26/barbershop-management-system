@@ -89,7 +89,7 @@ $fs = function($key, $default='') use ($footerSettings) {
         <ul class="footer-list footer-info">
           <li>
             <i class="fas fa-map-marker-alt"></i>
-            <?= $fs('shop_address', '123 Sample Street, Quezon City, Metro Manila') ?>
+            <?= $fs('shop_address', '213 Temple Street, Quezon City, Metro Manila') ?>
           </li>
           <li>
             <i class="fas fa-phone-alt"></i>

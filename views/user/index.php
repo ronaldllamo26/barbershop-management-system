@@ -14,7 +14,7 @@ $photos = [
     'barber_3'   => 'https://images.unsplash.com/photo-1503443207922-dff7d543fd0e?w=600&h=700&q=85&fit=crop',
     'barber_4'   => 'https://images.unsplash.com/photo-1534297635766-a262cdcb8ee4?w=600&h=700&q=85&fit=crop',
     'g1'         => 'https://images.unsplash.com/photo-1605497788044-5a32c7078486?w=900&q=85&fit=crop',
-    'g2'         => 'https://images.unsplash.com/photo-1593702288056-7cc638b5e8a6?w=600&q=85&fit=crop',
+    'g2'         => 'https://images.unsplash.com/photo-1621605815971-fbc98d665033?w=600&q=85&fit=crop',
     'g3'         => 'https://images.unsplash.com/photo-1560869713-7d0a29430803?w=600&q=85&fit=crop',
     'g4'         => 'https://images.unsplash.com/photo-1519345182560-3f2917c472ef?w=600&q=85&fit=crop',
     'g5'         => 'https://images.unsplash.com/photo-1596728325488-58c87691e9af?w=600&q=85&fit=crop',
@@ -50,15 +50,15 @@ require_once __DIR__ . '/../../includes/navbar.php';
         </div>
         <div class="hero-stats">
           <div>
-            <div class="stat-num" data-target="5" data-suffix="+">0+</div>
+            <div class="stat-num" data-target="1" data-suffix="+">0+</div>
             <div class="stat-label">Years of Service</div>
           </div>
           <div>
-            <div class="stat-num" data-target="12" data-suffix="+">0+</div>
+            <div class="stat-num" data-target="5" data-suffix="+">0+</div>
             <div class="stat-label">Master Barbers</div>
           </div>
           <div>
-            <div class="stat-num" data-target="5000" data-suffix="+">0+</div>
+            <div class="stat-num" data-target="1200" data-suffix="+">0+</div>
             <div class="stat-label">Happy Clients</div>
           </div>
         </div>
@@ -76,10 +76,7 @@ require_once __DIR__ . '/../../includes/navbar.php';
 
     </div>
   </div>
-  <div class="hero-scroll">
-    <span class="scroll-text">Scroll</span>
-    <div class="scroll-line"></div>
-  </div>
+  
 </section>
 
 
@@ -169,25 +166,38 @@ require_once __DIR__ . '/../../includes/navbar.php';
     </div>
     <div class="row g-4">
       <?php
-      $services = [
-        ['01','fa-cut',        'Haircut &amp; Style',       'Classic or modern, fade or taper — precision cuts tailored to your face shape.', '₱350','& up'],
-        ['02','fa-fire',       'Hot Towel Shave',           'Classic straight-razor shave with hot towel and premium shaving cream.',         '₱450','& up'],
-        ['03','fa-user-tie',   'Beard Trim &amp; Shape',    'From a clean shave to a sculpted beard — shaped to complement your look.',       '₱250','& up'],
-        ['04','fa-spa',        'Hair &amp; Scalp Treatment','Nourishing treatments — anti-dandruff, deep conditioning, hot oil.',             '₱500','& up'],
-        ['05','fa-child',      'Kids Haircut',              'Gentle and fun cuts for the little ones. Every kid leaves feeling gwapo.',       '₱250','& up'],
-        ['06','fa-star',       'BG Premium Package',        'Haircut + Hot Towel Shave + Beard Trim + Scalp Massage. The full glow-up.',     '₱999','complete'],
+      if (!isset($conn)) require_once __DIR__ . '/../../config/db.php';
+      $svcIcons = [
+        'Haircut & Style' => 'fa-cut',
+        'Shave'           => 'fa-fire',
+        'Beard'           => 'fa-user-tie',
+        'Treatment'       => 'fa-spa',
+        'Kids'            => 'fa-child',
+        'Packages'        => 'fa-star',
       ];
-      foreach ($services as $i => [$num, $icon, $name, $desc, $price, $suffix]): ?>
+      $catsRes = $conn->query("SELECT * FROM service_categories ORDER BY sort_order LIMIT 6");
+      $i = 0;
+      while ($cat = $catsRes->fetch_assoc()):
+        $catId   = $cat['id'];
+        $catName = $cat['name'];
+        $icon    = $svcIcons[$catName] ?? 'fa-scissors';
+        // Get min price for this category
+        $priceRes = $conn->query("SELECT MIN(price) AS min_price, description FROM services WHERE category_id=$catId AND is_active=1 LIMIT 1");
+        $priceRow = $priceRes ? $priceRes->fetch_assoc() : null;
+        $price    = $priceRow ? '₱' . number_format($priceRow['min_price']) : '₱0';
+        $desc     = $priceRow['description'] ?? $cat['description'] ?? '';
+        $num      = str_pad($i+1, 2, '0', STR_PAD_LEFT);
+      ?>
       <div class="col-md-6 col-lg-4 fade-up d<?= ($i%3)+1 ?>">
         <div class="svc-card">
           <div class="svc-num"><?= $num ?></div>
           <div class="svc-icon"><i class="fas <?= $icon ?>"></i></div>
-          <h4><?= $name ?></h4>
-          <p><?= $desc ?></p>
-          <div class="svc-price"><?= $price ?> <small><?= $suffix ?></small></div>
+          <h4><?= htmlspecialchars($catName) ?></h4>
+          <p><?= htmlspecialchars($desc) ?></p>
+          <div class="svc-price"><?= $price ?> <small>&amp; up</small></div>
         </div>
       </div>
-      <?php endforeach; ?>
+      <?php $i++; endwhile; ?>
     </div>
     <div class="text-center mt-5 fade-up">
       <a href="<?= BASE_PATH ?>views/user/services.php" class="btn-outline-dark">View Full Price List</a>
@@ -212,28 +222,37 @@ require_once __DIR__ . '/../../includes/navbar.php';
     </div>
     <div class="row g-4">
       <?php
-      $barbers = [
-        [$photos['barber_1'], 'Marco Reyes',   'Head Barber'],
-        [$photos['barber_2'], 'Jake Santos',   'Senior Barber'],
-        [$photos['barber_3'], 'Carlo Mendoza', 'Fade Specialist'],
-        [$photos['barber_4'], 'Luis Garcia',   'Color &amp; Style Expert'],
-      ];
-      foreach ($barbers as $i => [$photo, $name, $role]): ?>
+      if (!isset($conn)) require_once __DIR__ . '/../../config/db.php';
+      $barbersRes = $conn->query("SELECT * FROM barbers WHERE is_active=1 ORDER BY sort_order, id LIMIT 4");
+      $i = 0;
+      while ($b = $barbersRes->fetch_assoc()):
+        $bname  = htmlspecialchars($b['first_name'] . ' ' . $b['last_name']);
+        $brole  = htmlspecialchars($b['role_title']);
+        $bphoto = htmlspecialchars($b['photo'] ?? '');
+        $bInsta = htmlspecialchars($b['instagram'] ?? '#');
+        $bFace  = htmlspecialchars($b['facebook']  ?? '#');
+      ?>
       <div class="col-md-6 col-lg-3 fade-up d<?= $i+1 ?>">
         <div class="barber-card">
-          <img src="<?= $photo ?>" alt="<?= $name ?>" class="barber-img">
+          <?php if ($bphoto): ?>
+          <img src="<?= $bphoto ?>" alt="<?= $bname ?>" class="barber-img">
+          <?php else: ?>
+          <div class="barber-img" style="background:var(--dark-2);display:flex;align-items:center;justify-content:center;">
+            <i class="fas fa-user-tie" style="font-size:4rem;color:var(--gold);"></i>
+          </div>
+          <?php endif; ?>
           <div class="barber-overlay"></div>
           <div class="barber-info">
-            <h4><?= $name ?></h4>
-            <span class="barber-role"><?= $role ?></span>
+            <h4><?= $bname ?></h4>
+            <span class="barber-role"><?= $brole ?></span>
             <div class="barber-socials">
-              <a href="#"><i class="fab fa-instagram"></i></a>
-              <a href="#"><i class="fab fa-facebook-f"></i></a>
+              <a href="<?= $bInsta ?>" <?= $bInsta !== '#' ? 'target="_blank"' : '' ?>><i class="fab fa-instagram"></i></a>
+              <a href="<?= $bFace ?>"  <?= $bFace  !== '#' ? 'target="_blank"' : '' ?>><i class="fab fa-facebook-f"></i></a>
             </div>
           </div>
         </div>
       </div>
-      <?php endforeach; ?>
+      <?php $i++; endwhile; ?>
     </div>
   </div>
 </section>
@@ -346,7 +365,7 @@ require_once __DIR__ . '/../../includes/navbar.php';
       <div class="col-lg-4 fade-up d1">
         <?php
         $contacts = [
-          ['fa-map-marker-alt', 'Address',         '123 Sample Street, Brgy. [Barangay],<br>Quezon City, Metro Manila'],
+          ['fa-map-marker-alt', 'Address',         '213 Temple Street, Brgy. Balingasa,<br>Quezon City, Metro Manila'],
           ['fa-phone-alt',      'Phone / Viber',   '+63 912 345 6789<br>+63 900 123 4567'],
           ['fa-clock',          'Operating Hours', 'Mon – Fri &nbsp; 9:00 AM – 8:00 PM<br>Sat – Sun &nbsp; 9:00 AM – 7:00 PM'],
           ['fab fa-facebook-f', 'Social Media',    '@BGBiglangGwapoBarbershop'],

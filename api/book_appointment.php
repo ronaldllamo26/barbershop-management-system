@@ -11,18 +11,61 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST')    { echo json_encode(['success'=>fal
 if (session_status() === PHP_SESSION_NONE) session_start();
 
 require_once __DIR__ . '/../config/db.php';
+require_once __DIR__ . '/../config/security.php';
+
+security_headers();
 
 $raw  = file_get_contents('php://input');
 $data = json_decode($raw, true);
 
 if (!$data) { echo json_encode(['success'=>false,'message'=>'Invalid JSON payload.']); exit; }
 
-// Validate required fields
+// ── Rate limit booking — max 5 per IP per hour ──
+$rate = rate_limit_ip('booking', 5, 3600);
+if ($rate['blocked']) {
+    echo json_encode(['success'=>false,'message'=>$rate['message']]); exit;
+}
+
+// ── Honeypot check ──
+if (!empty($data['website'])) {
+    echo json_encode(['success'=>false,'message'=>'Spam detected.']); exit;
+}
+
+// ── reCAPTCHA v3 verify ──
+// Only verify if token is present — skip if empty (localhost testing)
+$token = $data['recaptcha_token'] ?? '';
+if (!empty($token) && !recaptcha_verify($token)) {
+    echo json_encode(['success'=>false,'message'=>'Security check failed. Please refresh and try again.']); exit;
+}
+
+// ── Validate required fields ──
 foreach (['services','barber','date','time','first_name','last_name','phone'] as $f) {
     if (empty($data[$f])) {
-        echo json_encode(['success'=>false,'message'=>"Missing: $f"]); exit;
+        echo json_encode(['success'=>false,'message'=>"Missing required field: $f"]); exit;
     }
 }
+
+// ── Validate date ──
+if (!validate_date($data['date'])) {
+    echo json_encode(['success'=>false,'message'=>'Invalid date format.']); exit;
+}
+
+// ── Validate date is not in the past ──
+if ($data['date'] < date('Y-m-d')) {
+    echo json_encode(['success'=>false,'message'=>'Cannot book appointments in the past.']); exit;
+}
+
+// ── Booking spam check — max 3 bookings per phone per day ──
+if (!empty($data['phone']) && check_booking_spam($data['phone'])) {
+    echo json_encode(['success'=>false,'message'=>'Maximum bookings per day reached for this phone number. Please contact us directly.']); exit;
+}
+
+// ── Sanitize inputs ──
+$data['first_name'] = clean($data['first_name']);
+$data['last_name']  = clean($data['last_name']);
+$data['phone']      = clean($data['phone']);
+$data['email']      = clean_email($data['email'] ?? '');
+$data['notes']      = clean($data['notes'] ?? '');
 
 $services = $data['services'];
 
