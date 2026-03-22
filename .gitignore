@@ -1,2 +1,32 @@
-/vendor/
-.env
+# ── Sensitive Config Files ──
+config/db.php
+config/mail.php
+config/security.php
+
+# ── Composer ──
+vendor/
+
+# ── Logs ──
+cron/reminder_log.txt
+
+# ── Helper/Temp Files ──
+reset_admin.php
+update_photos.php
+update_maps.php
+create_queue_table.php
+cron/add_reminder_column.php
+
+# ── OS Files ──
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ── IDE ──
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# ── PHP ──
+*.log
+*.cache
