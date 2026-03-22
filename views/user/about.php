@@ -29,7 +29,7 @@ require_once __DIR__ . '/../../includes/navbar.php';
       <div class="col-lg-5 fade-up">
         <div class="about-img-outer">
           <div class="about-year-tag">
-            <span class="ay-num">5+</span>
+            <span class="ay-num">1+</span>
             <span class="ay-label">Years</span>
           </div>
           <img src="https://images.unsplash.com/photo-1585747860715-2ba37e788b70?w=800&q=85&fit=crop"
@@ -72,9 +72,9 @@ require_once __DIR__ . '/../../includes/navbar.php';
     <div class="row g-4 text-center">
       <?php
       $stats = [
-        ['5+',    'Years in Business'],
-        ['12+',   'Master Barbers'],
-        ['5,000+','Happy Clients'],
+        ['1+',    'Years in Business'],
+        ['5+',   'Master Barbers'],
+        ['1,200+','Happy Clients'],
         ['4.9',   'Average Rating'],
       ];
       foreach ($stats as [$num, $label]): ?>

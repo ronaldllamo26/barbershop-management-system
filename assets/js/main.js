@@ -1,9 +1,12 @@
 /* BG Biglang Gwapo Barbershop – main.js */
 document.addEventListener('DOMContentLoaded', () => {
 
-  /* Page Loader */
-  const loader = document.getElementById('page-loader');
-  if (loader) setTimeout(() => loader.classList.add('hidden'), 2100);
+ /* Page Loader */
+const loader = document.getElementById('page-loader');
+if (loader) {
+    loader.style.transition = 'none';
+    loader.style.display = 'none';
+}
 
   /* Navbar scroll + hero-nav */
   const nav = document.getElementById('mainNav');

@@ -103,7 +103,7 @@ require_once __DIR__ . '/../../includes/navbar.php';
       <div class="col-lg-5 fade-up">
         <div class="about-img-outer">
           <div class="about-year-tag">
-            <span class="ay-num">5+</span>
+            <span class="ay-num">1+</span>
             <span class="ay-label">Years</span>
           </div>
           <img src="<?= $photos['about_main'] ?>" alt="BG Barbershop interior" class="about-img-main">
@@ -182,10 +182,10 @@ require_once __DIR__ . '/../../includes/navbar.php';
         $catName = $cat['name'];
         $icon    = $svcIcons[$catName] ?? 'fa-scissors';
         // Get min price for this category
-        $priceRes = $conn->query("SELECT MIN(price) AS min_price, description FROM services WHERE category_id=$catId AND is_active=1 LIMIT 1");
+        $priceRes = $conn->query("SELECT MIN(price) AS min_price FROM services WHERE category_id=$catId AND is_active=1 LIMIT 1");
         $priceRow = $priceRes ? $priceRes->fetch_assoc() : null;
-        $price    = $priceRow ? '₱' . number_format($priceRow['min_price']) : '₱0';
-        $desc     = $priceRow['description'] ?? $cat['description'] ?? '';
+        $price    = ($priceRow && $priceRow['min_price']) ? '₱' . number_format($priceRow['min_price']) : '₱0';
+        $desc     = $cat['description'] ?? '';
         $num      = str_pad($i+1, 2, '0', STR_PAD_LEFT);
       ?>
       <div class="col-md-6 col-lg-4 fade-up d<?= ($i%3)+1 ?>">
