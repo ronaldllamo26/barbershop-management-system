@@ -2,7 +2,7 @@
 
 <div align="center">
 
-![BG Barbershop](https://images.unsplash.com/photo-1503951914875-452162b0f3f1?w=1200&h=300&q=80&fit=crop)
+![BG Barbershop](https://images.unsplash.com/photo-1621605815971-fbc98d665033?w=1200&h=300&q=80&fit=crop)
 
 **A full-stack web-based barbershop management and online booking system**
 
