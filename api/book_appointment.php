@@ -1,4 +1,6 @@
 <?php
+error_reporting(0);
+ini_set('display_errors', 0);
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: POST, OPTIONS');
@@ -56,7 +58,8 @@ if ($data['date'] < date('Y-m-d')) {
 }
 
 // ── Booking spam check — max 3 bookings per phone per day ──
-if (!empty($data['phone']) && check_booking_spam($data['phone'])) {
+$spamCheck = check_booking_spam($conn, $data['phone']);
+if (!empty($data['phone']) && $spamCheck['blocked']) {
     echo json_encode(['success'=>false,'message'=>'Maximum bookings per day reached for this phone number. Please contact us directly.']); exit;
 }
 

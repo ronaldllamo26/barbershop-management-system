@@ -96,8 +96,8 @@ require_once __DIR__ . '/../../includes/navbar.php';
                   ],
                 ],
                 'Kids' => [
-                  'conflict_group' => 'hair',
-                  'note'           => 'Pick 1 — conflicts with Haircut & Packages',
+                    'conflict_group' => 'kids',
+                    'note'           => 'Pick 1 — conflicts with Haircut, Beard, Shave & Packages',
                   'items'          => [
                     ['Kids Haircut (12 & below)', '₱250', 25],
                   ],
@@ -386,10 +386,11 @@ const bk = { services: [], barber: 'No Preference', barberId: 0, date: '', time:
 // 'package' : Packages — conflict with EVERYTHING
 // 'shave','beard','treatment' : only conflict within own category
 const CONFLICT_MAP = {
-  hair:      ['hair', 'package'],
-  package:   ['hair', 'shave', 'beard', 'treatment', 'package'],
-  shave:     ['shave', 'package'],
-  beard:     ['beard', 'package'],
+  hair:      ['hair', 'kids', 'package'],
+  kids:      ['hair', 'kids', 'shave', 'beard', 'package'],
+  package:   ['hair', 'kids', 'shave', 'beard', 'treatment', 'package'],
+  shave:     ['shave', 'kids', 'package'],
+  beard:     ['beard', 'kids', 'package'],
   treatment: ['treatment', 'package'],
 };
 
@@ -611,10 +612,16 @@ function nextStep(from) {
     bk.barberId = sel ? parseInt(sel.dataset.id) : 0;
   }
   if (from === 3) {
+    const todayCheck = new Date().toISOString().split('T')[0];
+    const maxCheck = new Date();
+    maxCheck.setDate(maxCheck.getDate() + 14);
+    const maxCheckStr = maxCheck.toISOString().split('T')[0];
     if (!bk.date) { showAlert(3, 'Please select a date.'); return; }
+    if (bk.date < todayCheck) { showAlert(3, 'Cannot book past dates!'); return; }
+    if (bk.date > maxCheckStr) { showAlert(3, 'Cannot book more than 14 days in advance!'); return; }
     if (!bk.time) { showAlert(3, 'Please select a time slot.'); return; }
     buildSummary();
-  }
+}
   goToStep(from + 1);
 }
 
